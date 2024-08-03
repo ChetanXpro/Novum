@@ -12,6 +12,16 @@ export class VideoController {
     async getVideoFeed(@Query('lastVideoId') lastVideoId: string, @Query('limit') limit: number = 1) {
       return this.videoService.getNextVideos(lastVideoId, limit);
     }
+
+    @Post('initiate-upload')
+    async initiateUpload(@Body() body: { userId: string; title: string; fileType: string }) {
+      return this.videoService.initiateVideoUpload(body.userId, body.title, body.fileType);
+    }
+
+    @Post(':id/complete-upload')
+    async completeUpload(@Param('id') id: string) {
+      return this.videoService.completeVideoUpload(id);
+    }
     
     @Get()
     async findAll(@Query('page') page: number = 1, @Query('limit') limit: number = 10) {

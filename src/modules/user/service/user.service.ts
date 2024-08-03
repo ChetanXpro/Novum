@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-
-import { User, Video } from '@prisma/client';
+import { User, Video, Prisma } from '@prisma/client';
 import { PrismaService } from '../../common';
 
 @Injectable()
@@ -19,13 +18,27 @@ export class UserService {
             where: { id },
         });
     }
+    async findById(id: string): Promise<User | null> {
+        return this.prisma.user.findUnique({
+            where: { id },
+        });
+    }
 
-    async create(username: string, email: string): Promise<User> {
+    async findByEmail(email: string): Promise<User | null> {
+        return this.prisma.user.findUnique({
+            where: { email },
+        });
+    }
+
+    async findByGoogleId(googleId: string): Promise<User | null> {
+        return this.prisma.user.findUnique({
+            where: { googleId },
+        });
+    }
+
+    async create(data: Prisma.UserCreateInput): Promise<User> {
         return this.prisma.user.create({
-            data: {
-                username,
-                email,
-            },
+            data,
         });
     }
 
@@ -49,5 +62,66 @@ export class UserService {
         });
 
         return user ? user.videos : null;
+    }
+
+    async createPasswordResetToken(userId: string): Promise<string> {
+        const token = Math.random().toString(36).substr(2, 15);
+        const expiresAt = new Date(Date.now() + 3600000); // 1 hour from now
+
+        await this.prisma.passwordReset.upsert({
+            where: { userId },
+            update: { token, expiresAt },
+            create: { userId, token, expiresAt },
+        });
+
+        return token;
+    }
+
+    async verifyPasswordResetToken(token: string): Promise<User | null> {
+        const resetRecord = await this.prisma.passwordReset.findUnique({
+            where: { token },
+            include: { user: true },
+        });
+
+        if (!resetRecord || resetRecord.expiresAt < new Date()) {
+            return null;
+        }
+
+        return resetRecord.user;
+    }
+
+    async createEmailVerificationToken(userId: string): Promise<string> {
+        const token = Math.random().toString(36).substr(2, 15); 
+        const expiresAt = new Date(Date.now() + 86400000); // 24 hours from now
+
+        await this.prisma.emailVerification.upsert({
+            where: { userId },
+            update: { token, expiresAt },
+            create: { userId, token, expiresAt },
+        });
+
+        return token;
+    }
+
+    async verifyEmailToken(token: string): Promise<User | null> {
+        const verificationRecord = await this.prisma.emailVerification.findUnique({
+            where: { token },
+            include: { user: true },
+        });
+
+        if (!verificationRecord || verificationRecord.expiresAt < new Date()) {
+            return null;
+        }
+
+        await this.prisma.user.update({
+            where: { id: verificationRecord.userId },
+            data: { isEmailVerified: true },
+        });
+
+        await this.prisma.emailVerification.delete({
+            where: { id: verificationRecord.id },
+        });
+
+        return verificationRecord.user;
     }
 }

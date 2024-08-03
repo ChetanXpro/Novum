@@ -10,16 +10,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AuthType {
+  EMAIL
+  GOOGLE
+}
+
+
 model User {
   id            String    @id @default(uuid())
   username      String    @unique
+  firstName     String?
+  lastName      String?
   email         String    @unique
+  password      String?   // Hashed password for email/password auth
+  googleId      String?   @unique // For Google Auth
+  authType      AuthType  @default(EMAIL)
+  isEmailVerified Boolean @default(false)
+  profilePicUrl String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   videos        Video[]
   likes         Like[]
   comments      Comment[]
+  passwordReset PasswordReset?
+  emailVerification EmailVerification?
 }
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model EmailVerification {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
 
 model Video {
   id             String     @id @default(uuid())
