@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { Video, VideoStatus, Visibility } from '@prisma/client';
+import { Comment, Video, VideoStatus, Visibility } from '@prisma/client';
 import { PrismaService } from '../../common';
 import { TranscodingService } from './transcoding.service';
 import { v4 as uuidv4 } from 'uuid';
@@ -160,4 +160,100 @@ export class VideoService {
       data: { status },
     });
   }
+
+  async toggleLike(userId: string, videoId: string): Promise<void> {
+    const existingLike = await this.prisma.like.findUnique({
+      where: {
+        userId_videoId: {
+          userId,
+          videoId,
+        },
+      },
+    });
+
+    if (existingLike) {
+      // Unlike
+      await this.prisma.like.delete({
+        where: { id: existingLike.id },
+      });
+    } else {
+      // Like
+      await this.prisma.like.create({
+        data: {
+          userId,
+          videoId,
+        },
+      });
+    }
+  }
+
+  async addComment(userId: string, videoId: string, content: string): Promise<Comment> {
+    return this.prisma.comment.create({
+      data: {
+        content,
+        userId,
+        videoId,
+      },
+    });
+  }
+
+  async getComments(videoId: string, page: number = 1, pageSize: number = 10): Promise<Comment[]> {
+    return this.prisma.comment.findMany({
+      where: { videoId },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { id: true, username: true, profilePicUrl: true } } },
+    });
+  }
+
+  async getLikesCount(videoId: string): Promise<number> {
+    return this.prisma.like.count({
+      where: { videoId },
+    });
+  }
+
+  async incrementViews(videoId: string): Promise<Video> {
+    return this.prisma.video.update({
+      where: { id: videoId },
+      data: { views: { increment: 1 } },
+    });
+  }
+
+  async getVideoDetails(videoId: string): Promise<Video & { likesCount: number; commentsCount: number }> {
+    const video = await this.prisma.video.findUnique({
+      where: { id: videoId },
+      include: { user: true },
+    });
+
+    if (!video) {
+      throw new NotFoundException('Video not found');
+    }
+
+    const [likesCount, commentsCount] = await Promise.all([
+      this.getLikesCount(videoId),
+      this.prisma.comment.count({ where: { videoId } }),
+    ]);
+
+    return {
+      ...video,
+      likesCount,
+      commentsCount,
+    };
+  }
+
+  async isLikedByUser(userId: string, videoId: string): Promise<boolean> {
+    const like = await this.prisma.like.findUnique({
+      where: {
+        userId_videoId: {
+          userId,
+          videoId,
+        },
+      },
+    });
+
+    return !!like;
+  }
+
+  
 }

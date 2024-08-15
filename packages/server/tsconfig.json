@@ -7,6 +7,7 @@
     "noLib": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "target": "ES2022",
     "sourceMap": true,
     "allowJs": true,
@@ -15,7 +16,8 @@
     "noUnusedLocals": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "src/types/*.d.ts"
   ],
   "exclude": [
     "node_modules",

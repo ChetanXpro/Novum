@@ -1,0 +1,1 @@
+export {GetUser} from './get-usuer.decorator'

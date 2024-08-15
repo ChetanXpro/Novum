@@ -1,9 +1,19 @@
+
+
+
 export interface User {
-    id: string;
-    username: string;
-    email: string;
-    profilePicUrl: string;
-  }
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  authType: 'GOOGLE' | 'EMAIL';  
+  isEmailVerified: boolean;
+  profilePicUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
   
   export interface Video {
     id: string;

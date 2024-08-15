@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import videojs from 'video.js';
 import Player from 'video.js/dist/types/player';
 import 'video.js/dist/video-js.css';
-import "videojs-contrib-quality-levels"; 
+import "videojs-contrib-quality-levels";
 import 'videojs-contrib-quality-levels';
 import videojsqualityselector from 'videojs-hls-quality-selector';
 
@@ -32,8 +32,6 @@ export const VideoJS: React.FC<VideoJSProps> = ({ options, onReady }) => {
 
             // player.hlsQualitySelector = videojsqualityselector;
             // player.hlsQualitySelector();
-      
-         
             playerRef.current = player;
 
             // Apply custom styles
@@ -65,9 +63,10 @@ export const VideoJS: React.FC<VideoJSProps> = ({ options, onReady }) => {
     }, [playerRef]);
 
     return (
-        <div data-vjs-player className="w-full h-full">
-            <div ref={videoRef} className="w-full h-full" />
+        <div data-vjs-player className="w-full rounded-2xl h-full">
+            <div ref={videoRef} className="w-full rounded-2xl h-full" />
         </div>
+
     );
 }
 

@@ -1,37 +1,31 @@
 'use client';
 
 import { useState } from 'react';
-import { useAtom } from 'jotai';
-import { registerAtom, googleAuthAtom } from '@/store/authAtoms';
-import { useRouter } from 'next/navigation';
+// import { useAuth } from '@/hooks/useAuth';
 import Image from 'next/image';
+import { register } from '../../../lib/api';
 
 export default function Register() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [, register] = useAtom(registerAtom);
-  const [, googleAuth] = useAtom(googleAuthAtom);
-  const router = useRouter();
+  // const { registe } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await register({ username, email, password });
-      router.push('/dashboard');
+      await register(username, email, password);
     } catch (error) {
       console.error('Registration failed', error);
     }
   };
 
   const handleGoogleAuth = async () => {
-    try {
-      await googleAuth();
-    //   router.push('/dashboard');
-    } catch (error) {
-      console.error('Google authentication failed', error);
-    }
+    // This function should initiate the Google OAuth flow
+    // For example, redirect to your backend's Google auth endpoint
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
   };
+
 
   return (
     <div className="max-w-md mx-auto mt-8">
