@@ -1,6 +1,9 @@
-import { Body, Controller, Get, Param, Post, Put, Query, NotFoundException } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, NotFoundException, UseGuards } from '@nestjs/common';
 import { UserService } from '../service';
 import { CreateUserDto } from '../dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth-guard';
+// import { RestrictedGuard } from '../../common';
+import { GetUser } from '../../common/decorators';
 
 
 @Controller('users')
@@ -10,6 +13,22 @@ export class UserController {
     @Get()
     async findAll(@Query('page') page: number = 1, @Query('limit') limit: number = 10) {
         return this.userService.findAll(page, limit);
+    }
+
+    @Get('me')
+    @UseGuards(JwtAuthGuard)
+    async getMe(@GetUser() user: any) {
+        console.log('user==', user);
+        if (user === undefined) {
+            throw new NotFoundException('User not found==');
+        }
+      
+        
+        const user_record = await this.userService.findById(user.sub);
+        if (!user_record) {
+            throw new NotFoundException('User not found');
+        }
+        return user_record;
     }
 
     @Get(':id')

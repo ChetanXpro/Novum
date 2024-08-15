@@ -5,6 +5,14 @@ import { UserService } from '../../user/service/user.service';
 import { LoginDto, RegisterDto } from '../dto';
 
 
+interface GoogleUser {
+  id: string;
+  email: string;
+  displayName: string;
+  picture: string;
+  isEmailVerified: boolean;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -12,25 +20,36 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async googleLogin(user: any) {
-    if (!user) {
-      throw new UnauthorizedException();
+  async googleLogin(googleUser: GoogleUser) {
+    if (!googleUser) {
+      throw new UnauthorizedException('No user from Google');
     }
-    let dbUser = await this.userService.findByEmail(user.email);
-    if (!dbUser) {
-      dbUser = await this.userService.create({
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        username: user.email.split('@')[0],
-        googleId: user.googleId,
-        authType: 'GOOGLE',
-      });
+    try {
+      let dbUser = await this.userService.findByEmail(googleUser.email);
+      if (!dbUser) {
+        dbUser = await this.userService.create({
+          email: googleUser.email,
+          name: googleUser.displayName,
+          username: googleUser.email.split('@')[0],
+          isEmailVerified: googleUser.isEmailVerified,
+          googleId: googleUser.id,
+          profilePicUrl: googleUser.picture,
+          authType: 'GOOGLE',
+        });
+      } else if (!dbUser.googleId) {
+        // Update existing user with Google ID if they're logging in with Google for the first time
+        dbUser = await this.userService.update(dbUser.id, { googleId: googleUser.id });
+      }
+      const payload = { email: dbUser?.email, sub: dbUser?.id };
+
+      
+      return {
+        access_token: this.jwtService.sign(payload),
+      };
+    } catch (error) {
+      console.error('Google Login Error:', error);
+      throw new UnauthorizedException('Failed to process Google login');
     }
-    const payload = { email: dbUser.email, sub: dbUser.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
   }
 
   async register(registerDto: RegisterDto) {

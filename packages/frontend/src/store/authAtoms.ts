@@ -1,41 +1,21 @@
 import { atom } from 'jotai';
-import { atomWithStorage } from 'jotai/utils';
-import * as api from '../lib/api';
-import { User } from '@/types';
-
-export const userAtom = atomWithStorage<User | null>('user', null);
-export const tokenAtom = atom<string | null>(null);
+import { fetchUserInfo } from '../lib/api';
+import { User } from '../types';
 
 
+export const userAtom = atom<User | null>(null);
+export const isAuthenticatedAtom = atom((get) => !!get(userAtom));
 
 
-export const loginAtom = atom(
+export const initializeUserAtom = atom(
   null,
-  async (get, set, { email, password }: { email: string; password: string }) => {
-    const { user, token } = await api.login(email, password);
-    set(userAtom, user);
-    set(tokenAtom, token);
+  async (get, set) => {
+    try {
+      const user = await fetchUserInfo();
+      set(userAtom, user);
+    } catch (error) {
+      console.error('Failed to initialize user:', error);
+      set(userAtom, null);
+    }
   }
 );
-
-export const logoutAtom = atom(null, (get, set) => {
-  set(userAtom, null);
-  set(tokenAtom, null);
-});
-
-export const registerAtom = atom(
-    null,
-    async (get, set, { username, email, password }: { username: string; email: string; password: string }) => {
-      const { user, token } = await api.register(username, email, password);
-      set(userAtom, user);
-      set(tokenAtom, token);
-    }
-  );
-
-export const googleAuthAtom = atom(
-    null,
-    async (get, set) => {
-      // Redirect to Google OAuth URL
-      window.location.href = `${api.API_URL}/auth/google`;
-    }
-  );
