@@ -2,6 +2,10 @@
 
 Novum is a modern video sharing platform built with Next.js, NestJS, and TypeScript. It allows users to upload, view, and interact with videos in a user-friendly interface.
 
+# Video streaming tech
+
+Platform uses HLS streaming for better experience. I'm transcoding videos to multiple qualities, creating HLS playlists and segments, and enabling adaptive streaming.
+
 ## Project Structure
 
 This project is set up as a monorepo using npm workspaces. It consists of the following packages:
